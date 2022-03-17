@@ -1,0 +1,24 @@
+{
+    "system_parameters":
+
+    {
+
+        "root_documents_path": "./storage/",
+
+        "templates_path": "templates/",
+        "temporary_documents_path": "temp/",
+        "pdf_documents_path": "documents/",
+
+        "log_files_path_api": "logs/requests/",
+        "log_files_path_engine": "logs/uvicorn/",
+
+        "encoding": "utf-8",
+        "separator": " | ",
+        
+        "ms_word_document": ".docx",
+        "pdf_document": ".pdf",
+        "txt_document": ".txt"
+
+    }
+
+}

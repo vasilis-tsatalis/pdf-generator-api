@@ -1,0 +1,11 @@
+{
+    "documents": [
+        {
+            "code": "testdoc1",
+            "language": "GR",
+            "merge_fields": [],
+            "name": "myfirsttemplate1.docx",
+            "timestamp": ""
+        }
+    ]
+}
