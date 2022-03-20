@@ -1,7 +1,7 @@
 import json
  
 # function to add to JSON - bindings
-async def write_json_bindings(new_data, filename='./properties/config.json'):
+async def write_json_bindings(new_data, filename='properties/bindings.json'):
 
     with open(filename,'r+') as file:
         # load existing data into a dict.

@@ -17,5 +17,5 @@ class TemplateCreate(TemplateBase):
 
 class Template(TemplateBase):
     code: str
-    merge_fields: list
+    merge_fields: dict
     timestamp: str

@@ -1,5 +1,6 @@
 import os
 import base64
+from base64 import b64encode, b64decode
 
 async def decode_from_base64_to_document(text: str, fullname: str):
     base64_message = text
@@ -14,21 +15,20 @@ async def decode_from_base64_to_document(text: str, fullname: str):
         status = False
     return status
 
-async def document_convert_to_base64(fullname: str):
+async def document_convert_to_base64(fullname: str, encoding):
     """this function convert a document file to base64 format"""
 
-    with open(fullname, 'rb') as fn:
-        byte_content = fn.read()
-    fn.close()
-    message_bytes = byte_content.encode('ascii')
-    base64_bytes = base64.b64encode(message_bytes)
-    base64_message = base64_bytes.decode('ascii')
-    return base64_message
+    with open(fullname, 'rb') as open_file:
+        byte_content = open_file.read()
+    open_file.close()
+    base64_bytes = b64encode(byte_content)
+    base64_string = base64_bytes.decode(encoding)
+    return base64_string
 
 async def convertor_to_base64(text: str):
     """this function convert a text to base64 format"""
     base64_message = text
-    base64_bytes = base64_message.encode('ascii')
+    base64_bytes = base64_message.encode('utf-8')
     message_bytes = base64.b64decode(base64_bytes)
-    message = message_bytes.decode('ascii')
+    message = message_bytes.decode('utf-8')
     return message

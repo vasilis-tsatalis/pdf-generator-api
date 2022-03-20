@@ -8,8 +8,9 @@ from pydantic import BaseModel, Field
 class DocumentCreate(BaseModel):
     content: dict = Field(..., example = '37FzCcWapUbri/MHPZE4WpKjTPw...', description = 'This object contains all merge fields for population')
 
-class Document(DocumentCreate):
-    code: str
+class Document(BaseModel):
+    template_code: str
+    name: str
 
 class DocumentContent(Document):
-    encoding: dict = Field(..., example = {"encoding": "37FzCcWapUbriMHPZE4WpKjTPw..."})
+    encoding: str = Field(..., example = "JVBERi0xLjUNCiW1tbW1DQoxIDAgb2JqDQo8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMi...", description = 'This object contains pdf document in base64 format')

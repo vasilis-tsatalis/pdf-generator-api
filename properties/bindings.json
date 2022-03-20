@@ -1,11 +1,15 @@
 {
     "documents": [
         {
-            "code": "testdoc1",
-            "language": "GR",
-            "merge_fields": [],
-            "name": "myfirsttemplate1.docx",
-            "timestamp": ""
+            "code": "e9d0fa7ab412c5f6210a875320220317173109",
+            "language": "EN",
+            "merge_fields": {
+                "date": "",
+                "price": "",
+                "product": ""
+            },
+            "name": "testdocumenttable2_logo.docx",
+            "timestamp": "2022-03-17_180353"
         }
     ]
 }

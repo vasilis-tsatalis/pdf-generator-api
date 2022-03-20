@@ -4,7 +4,7 @@
     [
         
         {"mergename": "code", "mergevalue": "test", "mergetype": "object", "line": "0"},
-        {"mergename": "application", "mergevalue": "t1t2", "mergetype": "object", "line": "0"},
+        {"mergename": "aplcod", "mergevalue": "t1t2", "mergetype": "object", "line": "0"},
         {"mergename": "date", "mergevalue": "20220301", "mergetype": "object", "line": "0"},
         {"mergename": "time", "mergevalue": "112233", "mergetype": "object", "line": "0"},
 

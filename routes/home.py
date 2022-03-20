@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from decouple import config
 
 home_router = APIRouter(
-    prefix=f"{config('API_URL')}/",
+    prefix=f"{config('API_URL')}",
     tags=['Default Home Page']
 )
 

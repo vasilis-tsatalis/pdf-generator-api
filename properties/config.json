@@ -3,7 +3,7 @@
 
     {
 
-        "root_documents_path": "./storage/",
+        "root_documents_path": "storage/",
 
         "templates_path": "templates/",
         "temporary_documents_path": "temp/",

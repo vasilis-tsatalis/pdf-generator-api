@@ -42,7 +42,8 @@ async def create_new_template(template: TemplateCreate, request: Request, userna
     """
     template_name = template.name.lower()
     # check if template name already exists
-    exist_template = read_bindings('name', template_name)
+    templates = await read_templates_details()
+    exist_template = list(filter(lambda x: x['name'] == template_name, templates))
     if exist_template:
         headers = dict(request.headers)
         headers['username'] = username
@@ -51,7 +52,7 @@ async def create_new_template(template: TemplateCreate, request: Request, userna
         raise HTTPException(
             status_code=400, 
             detail=message, 
-            headers={"WWW-Authenticate": "Basic"},
+            headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
         )
     else:
         template_lang = template.language.upper()
@@ -65,18 +66,18 @@ async def create_new_template(template: TemplateCreate, request: Request, userna
             merge_fields = await findDocument_MergeFields(template_fullname)
             # python object to be appended
             data = {
-                    'code': template_code, 
-                    'name': template_name, 
-                    'language': template_lang,
-                    'merge_fields': merge_fields,
-                    'timestamp': timestamp
+                    "code": template_code, 
+                    "name": template_name, 
+                    "language": template_lang,
+                    "merge_fields": merge_fields,
+                    "timestamp": timestamp
                     }
             await write_json_bindings(data)
             headers = dict(request.headers)
             headers['username'] = username
             message = "Template with code " + template_code + " has been created"
             await qlogging('access', str(request.url), str(request.client), str(headers), '201', message)
-            return {'template_code': template_code, 'merge_fields': merge_fields, 'message': message}
+            return data
 
         # an error occured
         headers = dict(request.headers)
@@ -86,7 +87,7 @@ async def create_new_template(template: TemplateCreate, request: Request, userna
         return HTTPException(
                 status_code=501, 
                 detail=message, 
-                headers={"WWW-Authenticate": "Basic"},
+                headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
             )
 
 
@@ -119,7 +120,7 @@ async def read_template_by_code(template_code: str, request: Request, username: 
     raise HTTPException(
         status_code=404, 
         detail=message,
-        headers={"WWW-Authenticate": "Basic"},
+        headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
         )
  
 
@@ -131,13 +132,13 @@ async def delete_template_by_code(template_code: str, request: Request, username
     if data:
         deleted_template = data[0]
         template_fullname = ROOT_PATH + TEMPLATES_PATH + deleted_template.get('code') + DOCX_FORMAT
-        with open('./properties/bindings.json', 'rb') as fp:
+        with open('properties/bindings.json', 'rb') as fp:
             jsondata = json.load(fp)                                                   
         json.dumps(jsondata, indent=4)
         fp.close()
         jsondata['documents'].remove(deleted_template)
         # Output the updated file with pretty JSON                                      
-        open("./properties/bindings.json", "w").write(
+        open("properties/bindings.json", "w").write(
             json.dumps(jsondata, sort_keys=True, indent=4, separators=(',', ': '))
         )
 
@@ -155,5 +156,5 @@ async def delete_template_by_code(template_code: str, request: Request, username
     raise HTTPException(
         status_code=404, 
         detail=message,
-        headers={"WWW-Authenticate": "Basic"},
+        headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
         )

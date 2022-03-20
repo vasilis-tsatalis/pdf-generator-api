@@ -11,7 +11,7 @@ from tools.reader import read_configuration, read_templates_details
 from tools.merge import createDocument
 from tools.convert import createPdf
 from tools.base64 import document_convert_to_base64
-from schemas.documents import DocumentCreate
+from schemas.documents import DocumentCreate, DocumentContent
 
 
 # # # Load System Values # # # 
@@ -36,7 +36,7 @@ document_router = APIRouter(
 
 
 # Create document from template
-@document_router.post("/template/{template_code}", status_code = status.HTTP_201_CREATED)
+@document_router.post("/template/{template_code}", response_model=DocumentContent, status_code = status.HTTP_201_CREATED)
 async def create_document_from_template(template_code: str, document: DocumentCreate, request: Request, username: str = Depends(authenticate_user)):
     templates = await read_templates_details()
     template = list(filter(lambda x: x['code'] == template_code, templates))
@@ -48,7 +48,7 @@ async def create_document_from_template(template_code: str, document: DocumentCr
         raise HTTPException(
             status_code=404, 
             detail=message,
-            headers={"WWW-Authenticate": "Basic"},
+            headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
             )
 
     # build template fullname
@@ -60,75 +60,83 @@ async def create_document_from_template(template_code: str, document: DocumentCr
     file_name = secrets.token_hex(12) + str(date_time) + PDF_FORMAT
     document_fullname = ROOT_PATH + PDFDOCUMENT_PATH + file_name
     
-    #################################################################################
-
+#################################################################################
     # Convert Requested data to be acceptable
-    # define values
-    final_dict = {}
-    type_lists = []
-    temp_list = []
-    list_value = []
-    temp_dict = {}
+    # Initialize values
+    _lists = []
+    _temp_list = []
+    _temp_list_dictionary = {}
+    _working_list_value = []
+    final_dictionary = {}
 
-    data = document.content
+    received_data = document.content
     # Iterating through the json list
-    for item in data['metadata']:
-        #print(item)
-        if item['mergetype'] == 'object' or item['mergetype'].__contains__('object'):
-            final_dict[item['mergename']] = item['mergevalue']
+    for item in received_data['metadata']:
+
+        if (item['mergetype'] == 'object') or (item['mergetype'].__contains__('object')):
+            final_dictionary[item['mergename']] = item['mergevalue']
+
+        elif (item['mergetype'] not in _lists) and (item['mergetype'].__contains__('list')):
+            _lists.append(item['mergetype'])
+
         else:
-            if item['mergetype'] not in type_lists:
-                type_lists.append(item['mergetype'])
+            # expand in the future for other data types
+            continue
 
-    if len(type_lists) == 0:
-        print('there are no lists objects')
-    else:
-        for the_type in type_lists:
-            for item in data['metadata']:
-                if item['mergetype'] == the_type:
-                    list_name = str(the_type)
-                    temp_list.append(item)
+    # check if there are lists for document content
+    if len(_lists) != 0:
 
-            # sort list by line key
-            temp_list = sorted(temp_list, key = lambda x: x['line'])
+        for list_name in _lists:
+
+            _temp_list = list(filter(lambda x: x['mergetype'] == list_name, received_data['metadata']))
+
+            # Sort the list by line key to find 
+            # last record counter number
+            _temp_list = sorted(_temp_list, key = lambda x: x['line'])
             # find last record into the list
-            last_record = temp_list[-1]
-            last_work_line = int(last_record['line'])
+            last_record = _temp_list[-1]
+            last_record_counter_number = int(last_record['line'])
+            # Define a value for reading current line
             current_line = 1
-
-            while current_line <= last_work_line:
+            # # 
+            while current_line <= last_record_counter_number:
                 # read record for specific line into the list
-                for x in temp_list:
-                    if int(x['line']) == current_line:
-                        temp_dict[x['mergename']] = x['mergevalue']
-                list_value.append(dict(temp_dict))
+                for item in _temp_list:
+
+                    if int(item['line']) == current_line:
+
+                        _temp_list_dictionary[item['mergename']] = item['mergevalue']
+
                 current_line += 1
+                item = {}
+                _working_list_value.append(_temp_list_dictionary)
+                _temp_list_dictionary = {}
+                
+            final_dictionary[list_name] = _working_list_value
+            _temp_list = []
+            _working_list_value = []
 
-            temp_list = []
-            final_dict[list_name] = list_value
-            list_name = ''
-            list_value = []
-            current_line = 0
-            last_work_line = 0
-
-            #print(final_dict)
-
-    #################################################################################
-
+#################################################################################
     # create temporary docx document and merge content
-    status_temp = await createDocument(template_fullname, final_dict, merge_fullname)
-    if status_temp == True and os.path.exists(merge_fullname):
+    status_temp = await createDocument(template_fullname, final_dictionary, merge_fullname)
+    if os.path.exists(merge_fullname):
         # convert and store document from docx to pdf
         status_doc = await createPdf(merge_fullname, document_fullname)
         if status_doc == True and os.path.exists(document_fullname):
             os.remove(merge_fullname)
+
             headers = dict(request.headers)
             headers['username'] = username
             message = "Document from template_code " + template_code + " has been created: " + file_name
             await qlogging('access', str(request.url), str(request.client), str(headers), '201', message)           
-            encoding = await document_convert_to_base64(document_fullname)
-            return {'encoding': encoding}
+            b64_data = await document_convert_to_base64(document_fullname, ENCODING)
 
+            docu_final = {
+                "template_code": template_code,
+                "name": file_name,
+                "encoding": b64_data
+            }
+            return docu_final
     # an error occured
     headers = dict(request.headers)
     headers['username'] = username
@@ -137,5 +145,5 @@ async def create_document_from_template(template_code: str, document: DocumentCr
     return HTTPException(
             status_code=501, 
             detail=message, 
-            headers={"WWW-Authenticate": "Basic"},
+            headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
         )

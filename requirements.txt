@@ -1,7 +1,7 @@
 anyio==3.5.0
-appscript==1.2.0
 asgiref==3.5.0
 click==8.0.4
+colorama==0.4.4
 docx-mailmerge==0.5.0
 docx2pdf==0.1.8
 fastapi==0.75.0
@@ -10,8 +10,9 @@ idna==3.3
 lxml==4.8.0
 pydantic==1.9.0
 python-decouple==3.6
+pywin32==303
 sniffio==1.2.0
 starlette==0.17.1
 tqdm==4.63.0
-typing_extensions==4.1.1
+typing-extensions==4.1.1
 uvicorn==0.17.6
