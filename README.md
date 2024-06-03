@@ -6,3 +6,7 @@ $ python server.py
 
 # Run Uvicorn
 $ uvicorn app:app --reload --port 8800
+
+# Run FASTAPI
+$ fastapi dev app.py --reload --port 8800
+$ fastapi run app.py --reload --port 8800

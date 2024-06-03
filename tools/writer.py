@@ -1,9 +1,10 @@
 import json
+from decouple import config
  
 # function to add to JSON - bindings
-async def write_json_bindings(new_data, filename='properties/bindings.json'):
+async def write_json_bindings(new_data, filename=f"{config('BINDINGS_FILE')}"):
 
-    with open(filename,'r+') as file:
+    with open(filename,'a') as file:
         # load existing data into a dict.
         file_data = json.load(file)
         # Join new_data with file_data inside emp_details

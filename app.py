@@ -7,29 +7,35 @@ from routes.templates import template_router
 from routes.documents import document_router
 # =======================================================
 
+BASE_URL = f"{config('API_URL')}"
+
 # Define app as fastapi app
 description = """
 
-Document Generator Api helps you do awesome stuff. 🚀 \n
+Document Generator Api v2 helps you do awesome stuff. 🚀 \n
 
 ## Templates
 
-* **Create templates**
+* **Create template**
 
 * **Read templates**
 
-* **Delete templates**
+* **Read template content**
+
+* **Delete template**
 
 ## Documents
 
-* **Create documents**
+* **Create document**
+
+* **Read document**
 
 """
 
 app = FastAPI(
-    title = "Document Conventor Api (DGA)",
+    title = "Document Conventor Api v2 (DGA)",
     description = description + "\b",
-    version = "0.1.0",
+    version = "0.2.2",
     openapi_url=f"{config('API_URL')}/openapi.json",
     docs_url=f"{config('API_URL')}/documentation", 
     redoc_url=f"{config('API_URL')}/redocs",
@@ -46,6 +52,6 @@ app = FastAPI(
 )
 
 # Main Routes of API
-app.include_router(home_router)
-app.include_router(template_router)
-app.include_router(document_router)
+app.include_router(home_router,prefix=BASE_URL + f"{config('HOME_ROUTE')}",tags=[f"{config('HOME_TAG')}"])
+app.include_router(template_router,prefix=BASE_URL + f"{config('TEMPLATES_ROUTE')}", tags=[f"{config('TEMPLATES_TAG')}"])
+app.include_router(document_router,prefix=BASE_URL + f"{config('DOCUMENTS_ROUTE')}", tags=[f"{config('DOCUMENTS_TAG')}"])

@@ -32,3 +32,8 @@ async def convertor_to_base64(text: str):
     message_bytes = base64.b64decode(base64_bytes)
     message = message_bytes.decode('utf-8')
     return message
+
+async def encode_from_file_to_base64(fullname: str):
+    with open(fullname, "rb") as file:
+        encoded_string = base64.b64encode(file.read())
+        return encoded_string

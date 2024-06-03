@@ -1,5 +1,6 @@
 # import libraries
 from fastapi import APIRouter, Depends, status, HTTPException, Request
+from fastapi.responses import FileResponse
 from decouple import config
 import os
 import secrets
@@ -7,21 +8,20 @@ from datetime import datetime
 # include other functionality
 from auth.authentication import authenticate_user
 from tools.logging import qlogging
-from tools.reader import read_configuration, read_templates_details
+from tools.reader import read_templates_details
 from tools.merge import createDocument
 from tools.convert import createPdf
-from tools.base64 import document_convert_to_base64
-from schemas.documents import DocumentCreate, DocumentContent
+from schemas.documents import DocumentCreate
 
 
 # # # Load System Values # # # 
-ENCODING = read_configuration('encoding')
-DOCX_FORMAT = read_configuration('ms_word_document')
-PDF_FORMAT = read_configuration('pdf_document')
-ROOT_PATH = read_configuration('root_documents_path')
-TEMPLATES_PATH = read_configuration('templates_path')
-TEMPORARY_PATH = read_configuration('temporary_documents_path')
-PDFDOCUMENT_PATH = read_configuration('pdf_documents_path')
+ENCODING = f"{config('ENCODING')}"
+DOCX_FORMAT = f"{config('DOCX_FORMAT')}"
+PDF_FORMAT = f"{config('PDF_FORMAT')}"
+ROOT_PATH = f"{config('ROOT_PATH')}"
+TEMPLATES_PATH = f"{config('TEMPLATES_PATH')}"
+TEMPORARY_PATH = f"{config('TEMPORARY_DOCUMENTS_PATH')}"
+PDFDOCUMENT_PATH = f"{config('PDF_DOCUMENTS_PATH')}"
 
 # # # Find Date # # #
 now = datetime.now() # current date and time
@@ -29,21 +29,16 @@ date_time = now.strftime("%Y%m%d%H%M%S")
 timestamp = now.strftime("%Y-%m-%d_%H%M%S")
 
 # Route base url
-document_router = APIRouter(
-    prefix=f"{config('API_URL')}/documents",
-    tags=['Documents']
-)
-
+document_router = APIRouter()
 
 # Create document from template
-@document_router.post("/template/{template_code}", response_model=DocumentContent, status_code = status.HTTP_201_CREATED)
-async def create_document_from_template(template_code: str, document: DocumentCreate, request: Request, username: str = Depends(authenticate_user)):
+@document_router.post("/template/{template_code}", status_code = status.HTTP_201_CREATED)
+async def create_document(template_code: str, document: DocumentCreate, request: Request, username: str = Depends(authenticate_user)):
     templates = await read_templates_details()
     template = list(filter(lambda x: x['code'] == template_code, templates))
     if not template:
         headers = dict(request.headers)
-        headers['username'] = username
-        message = "Template code not found"
+        message = "Template code not found for the user: " + username
         await qlogging('error', str(request.url), str(request.client), str(headers), '404', message)    
         raise HTTPException(
             status_code=404, 
@@ -57,7 +52,8 @@ async def create_document_from_template(template_code: str, document: DocumentCr
     docx_temp_name = date_time + '_' + template_code + '_' + DOCX_FORMAT
     merge_fullname = ROOT_PATH + TEMPORARY_PATH + docx_temp_name
     # build document name
-    file_name = secrets.token_hex(12) + str(date_time) + PDF_FORMAT
+    file_code = secrets.token_hex(16)
+    file_name = file_code + PDF_FORMAT
     document_fullname = ROOT_PATH + PDFDOCUMENT_PATH + file_name
     
 #################################################################################
@@ -73,10 +69,10 @@ async def create_document_from_template(template_code: str, document: DocumentCr
     # Iterating through the json list
     for item in received_data['metadata']:
 
-        if (item['mergetype'] == 'object') or (item['mergetype'].__contains__('object')):
+        if (item['mergetype'] == 'object') or (item['mergetype'].__contains__('object')) or (item['mergetype'].__contains__('OBJECT')):
             final_dictionary[item['mergename']] = item['mergevalue']
 
-        elif (item['mergetype'] not in _lists) and (item['mergetype'].__contains__('list')):
+        elif (item['mergetype'] not in _lists) and ((item['mergetype'].__contains__('list')) or (item['mergetype'].__contains__('LIST'))):
             _lists.append(item['mergetype'])
 
         else:
@@ -126,20 +122,12 @@ async def create_document_from_template(template_code: str, document: DocumentCr
             os.remove(merge_fullname)
 
             headers = dict(request.headers)
-            headers['username'] = username
-            message = "Document from template_code " + template_code + " has been created: " + file_name
+            headers['doc_code'] = file_code
+            message = "Document from template_code " + template_code + " has been created: " + file_name + " - from the user: " + username
             await qlogging('access', str(request.url), str(request.client), str(headers), '201', message)           
-            b64_data = await document_convert_to_base64(document_fullname, ENCODING)
-
-            docu_final = {
-                "template_code": template_code,
-                "name": file_name,
-                "encoding": b64_data
-            }
-            return docu_final
+            return FileResponse(document_fullname, headers=headers, media_type="application/pdf")
     # an error occured
     headers = dict(request.headers)
-    headers['username'] = username
     message = "Unable to create pdf document"
     await qlogging('error', str(request.url), str(request.client), str(headers), '501', message)
     return HTTPException(

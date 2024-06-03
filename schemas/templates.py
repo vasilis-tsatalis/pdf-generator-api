@@ -19,3 +19,10 @@ class Template(TemplateBase):
     code: str
     merge_fields: dict
     timestamp: str
+    created_by: Optional[str]
+
+
+class Template_Content(BaseModel):
+    code: str
+    origin_name: Optional[str]
+    content: str

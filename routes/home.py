@@ -1,21 +1,17 @@
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
-from decouple import config
 
-home_router = APIRouter(
-    prefix=f"{config('API_URL')}",
-    tags=['Default Home Page']
-)
+home_router = APIRouter()
 
 @home_router.get("/", response_class=HTMLResponse)
-async def index():
+async def health_check():
     return """
         <html>
             <head>
                 <title>DGA</title>
             </head>
             <body>
-                <h3><i>Document Generator Api</i></h3>
+                <h3><i>Document Generator Api v2</i></h3>
             </body>
         </html>
     """
