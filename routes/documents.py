@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from decouple import config
 import os
 import secrets
+import uuid
 from datetime import datetime
 # include other functionality
 from auth.authentication import authenticate_user
@@ -23,6 +24,8 @@ TEMPLATES_PATH = f"{config('TEMPLATES_PATH')}"
 TEMPORARY_PATH = f"{config('TEMPORARY_DOCUMENTS_PATH')}"
 PDFDOCUMENT_PATH = f"{config('PDF_DOCUMENTS_PATH')}"
 
+REQUEST_ID = str(uuid.uuid4())
+
 # # # Find Date # # #
 now = datetime.now() # current date and time
 date_time = now.strftime("%Y%m%d%H%M%S")
@@ -39,9 +42,9 @@ async def create_document(template_code: str, document: DocumentCreate, request:
     if not template:
         headers = dict(request.headers)
         message = "Template code not found for the user: " + username
-        await qlogging('error', str(request.url), str(request.client), str(headers), '404', message)    
+        await qlogging('error', REQUEST_ID, str(request.url), str(request.client), str(headers), '404', message)    
         raise HTTPException(
-            status_code=404, 
+            status_code=status.HTTP_404_NOT_FOUND, 
             detail=message,
             headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
             )
@@ -52,7 +55,7 @@ async def create_document(template_code: str, document: DocumentCreate, request:
     docx_temp_name = date_time + '_' + template_code + '_' + DOCX_FORMAT
     merge_fullname = ROOT_PATH + TEMPORARY_PATH + docx_temp_name
     # build document name
-    file_code = secrets.token_hex(16)
+    file_code = REQUEST_ID # secrets.token_hex(16)
     file_name = file_code + PDF_FORMAT
     document_fullname = ROOT_PATH + PDFDOCUMENT_PATH + file_name
     
@@ -124,14 +127,36 @@ async def create_document(template_code: str, document: DocumentCreate, request:
             headers = dict(request.headers)
             headers['doc_code'] = file_code
             message = "Document from template_code " + template_code + " has been created: " + file_name + " - from the user: " + username
-            await qlogging('access', str(request.url), str(request.client), str(headers), '201', message)           
+            await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '201', message)           
             return FileResponse(document_fullname, headers=headers, media_type="application/pdf")
     # an error occured
     headers = dict(request.headers)
     message = "Unable to create pdf document"
-    await qlogging('error', str(request.url), str(request.client), str(headers), '501', message)
+    await qlogging('error', REQUEST_ID, str(request.url), str(request.client), str(headers), '501', message)
     return HTTPException(
-            status_code=501, 
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, 
             detail=message, 
             headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
         )
+
+
+# Receive document by code
+@document_router.get("/{document_code}", status_code = status.HTTP_200_OK)
+async def read_document(document_code: str, request: Request, username: str = Depends(authenticate_user)):
+    
+    document_fullname = ROOT_PATH + PDFDOCUMENT_PATH + document_code + PDF_FORMAT 
+    if os.path.exists(document_fullname):
+        headers = dict(request.headers)
+        headers['doc_code'] = document_code
+        message = "Document with code " + document_code + " found for the user: " + username
+        await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '201', message)           
+        return FileResponse(document_fullname, headers=headers, media_type="application/pdf")
+    else:
+        headers = dict(request.headers)
+        message = "Document code not found for the user: " + username
+        await qlogging('error', REQUEST_ID, str(request.url), str(request.client), str(headers), '404', message)    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=message,
+            headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
+            )

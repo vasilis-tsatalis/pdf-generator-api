@@ -5,6 +5,7 @@ from decouple import config
 import os
 import json
 import secrets
+import uuid
 from datetime import datetime
 # include other functionality
 from auth.authentication import authenticate_user
@@ -22,6 +23,8 @@ DOCX_FORMAT = f"{config('DOCX_FORMAT')}"
 ROOT_PATH = f"{config('ROOT_PATH')}"
 TEMPLATES_PATH = f"{config('TEMPLATES_PATH')}"
 
+REQUEST_ID = str(uuid.uuid4())
+
 # # # Find Date # # #
 now = datetime.now() # current date and time
 date_time = now.strftime("%Y%m%d%H%M%S")
@@ -38,7 +41,7 @@ async def create_new_template(template: TemplateCreate, request: Request, userna
     """
     template_name = template.name.lower()    
     template_lang = template.language.upper()
-    template_code = secrets.token_hex(16)
+    template_code = REQUEST_ID # secrets.token_hex(16)
     template_fullname = ROOT_PATH + TEMPLATES_PATH + template_code + DOCX_FORMAT
     # write received value in txt temporary file
     template_status  = await decode_from_base64_to_document(template.content, template_fullname)
@@ -59,16 +62,16 @@ async def create_new_template(template: TemplateCreate, request: Request, userna
         await write_json_bindings(data)
         headers = dict(request.headers)
         message = "Template with code " + template_code + " has been created from the user: " + username
-        await qlogging('access', str(request.url), str(request.client), str(headers), '201', message)
+        await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '201', message)
         return data
 
     # an error occured
     headers = dict(request.headers)
     headers['username'] = username
     message = "Unable to create template from the user: " + username
-    await qlogging('error', str(request.url), str(request.client), str(headers), '501', message)
+    await qlogging('error', REQUEST_ID, str(request.url), str(request.client), str(headers), '501', message)
     return HTTPException(
-            status_code=501, 
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, 
             detail=message, 
             headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
         )
@@ -80,7 +83,7 @@ async def read_templates(request: Request, username: str = Depends(authenticate_
     templates = await read_templates_details()
     headers = dict(request.headers)
     message = "All templates have been found for the user: " + username
-    await qlogging('access', str(request.url), str(request.client), str(headers), '200', message)
+    await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '200', message)
     return templates
 
 
@@ -92,13 +95,13 @@ async def read_template_details(template_code: str, request: Request, username: 
     if template:
         headers = dict(request.headers)
         message = "Read specific template with code: " + template_code + " from the user: " + username
-        await qlogging('access', str(request.url), str(request.client), str(headers), '200', message)
+        await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '200', message)
         return template[0]
     headers = dict(request.headers)
     message = "Template code not found for the user: " + username
-    await qlogging('error', str(request.url), str(request.client), str(headers), '404', message)    
+    await qlogging('error', REQUEST_ID, str(request.url), str(request.client), str(headers), '404', message)    
     raise HTTPException(
-        status_code=404, 
+        status_code=status.HTTP_404_NOT_FOUND, 
         detail=message,
         headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
         )
@@ -115,13 +118,13 @@ async def read_template_content(template_code: str, request: Request, username: 
         readed_template['content'] = encoded_template
         headers = dict(request.headers)
         message = "Read specific template with code: " + template_code + " from the user: " + username
-        await qlogging('access', str(request.url), str(request.client), str(headers), '200', message)
+        await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '200', message)
         return readed_template
     headers = dict(request.headers)
     message = "Template code not found for the user: " + username
-    await qlogging('error', str(request.url), str(request.client), str(headers), '404', message)    
+    await qlogging('error', REQUEST_ID, str(request.url), str(request.client), str(headers), '404', message)    
     raise HTTPException(
-        status_code=404, 
+        status_code=status.HTTP_404_NOT_FOUND, 
         detail=message,
         headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
         )
@@ -154,9 +157,9 @@ async def delete_template(template_code: str, request: Request, username: str = 
     headers = dict(request.headers)
     headers['username'] = username
     message = "Template code not found"
-    await qlogging('error', str(request.url), str(request.client), str(headers), '404', message)    
+    await qlogging('error', REQUEST_ID, str(request.url), str(request.client), str(headers), '404', message)    
     raise HTTPException(
-        status_code=404, 
+        status_code=status.HTTP_404_NOT_FOUND, 
         detail=message,
         headers={"WWW-Authenticate": "Basic", "Content-Type": "application/json"},
         )
