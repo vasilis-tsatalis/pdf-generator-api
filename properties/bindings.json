@@ -9,7 +9,32 @@
                 "product": ""
             },
             "name": "testdocumenttable2_logo.docx",
-            "timestamp": "2022-03-17_180353"
+            "timestamp": "2022-03-17_180353",
+            "created_by": "admin"
+        },
+        {
+            "code": "e9d0fa7ab412c5f6210a8753202200987654",
+            "language": "EN",
+            "merge_fields": {
+                "date": "",
+                "price": "",
+                "product": ""
+            },
+            "name": "testdocumenttable3_logo.docx",
+            "timestamp": "2022-03-13_180353",
+            "created_by": "testuser"
+        },
+        {
+            "code": "e9d0bf832ab412c5f6210a8753202200987654",
+            "language": "EN",
+            "merge_fields": {
+                "date": "",
+                "price": "",
+                "product": ""
+            },
+            "name": "testdocumenttable4_logo.docx",
+            "timestamp": "2022-03-15_180353",
+            "created_by": "testuser"
         }
     ]
 }

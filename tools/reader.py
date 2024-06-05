@@ -26,3 +26,11 @@ async def read_templates_details(filename=f"{config('BINDINGS_FILE')}"):
     data = json.load(f)
     templates = data['documents']
     return templates
+
+async def read_authenticated_users(filename=f"{config('AUTH_CONFIG_FILE')}"):
+    # Opening JSON file
+    f = open(filename)
+    # returns JSON object as a dictionary
+    data = json.load(f)
+    auth_users = data['api_users']
+    return auth_users

@@ -81,10 +81,11 @@ async def create_new_template(template: TemplateCreate, request: Request, userna
 @template_router.get("/", response_model=List[Template], status_code = status.HTTP_200_OK)
 async def read_templates(request: Request, username: str = Depends(authenticate_user), skip: int = 0, limit: int = 300):
     templates = await read_templates_details()
+    user_templates = list(filter(lambda x: x['created_by'] == username, templates))
     headers = dict(request.headers)
     message = "All templates have been found for the user: " + username
     await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '200', message)
-    return templates
+    return user_templates
 
 
 # Read one method by id

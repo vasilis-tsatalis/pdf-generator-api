@@ -1,0 +1,13 @@
+{
+    "api_users": 
+                [
+                    {
+                        "username": "admin",
+                        "password": "admin"
+                    },
+                    {
+                        "username": "testuser",
+                        "password": "testpass"
+                    }
+                ]
+}
