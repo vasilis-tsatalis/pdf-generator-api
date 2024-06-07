@@ -23,13 +23,6 @@ DOCX_FORMAT = f"{config('DOCX_FORMAT')}"
 ROOT_PATH = f"{config('ROOT_PATH')}"
 TEMPLATES_PATH = f"{config('TEMPLATES_PATH')}"
 
-REQUEST_ID = str(uuid.uuid4())
-
-# # # Find Date # # #
-now = datetime.now() # current date and time
-date_time = now.strftime("%Y%m%d%H%M%S")
-timestamp = now.strftime("%Y-%m-%d_%H%M%S")
-
 # Route base url
 template_router = APIRouter()
 
@@ -39,6 +32,12 @@ async def create_new_template(template: TemplateCreate, request: Request, userna
     """
     This function will convert base64 and create a new template in docx format
     """
+    REQUEST_ID = str(uuid.uuid4())
+    # # # Find Date # # #
+    now = datetime.now() # current date and time
+    date_time = now.strftime("%Y%m%d%H%M%S")
+    timestamp = now.strftime("%Y-%m-%d_%H%M%S")
+
     template_name = template.name.lower()    
     template_lang = template.language.upper()
     template_code = REQUEST_ID # secrets.token_hex(16)
@@ -80,6 +79,12 @@ async def create_new_template(template: TemplateCreate, request: Request, userna
 # Read all method
 @template_router.get("/", response_model=List[Template], status_code = status.HTTP_200_OK)
 async def read_templates(request: Request, username: str = Depends(authenticate_user), skip: int = 0, limit: int = 300):
+
+    REQUEST_ID = str(uuid.uuid4())
+    now = datetime.now() # current date and time
+    date_time = now.strftime("%Y%m%d%H%M%S")
+    timestamp = now.strftime("%Y-%m-%d_%H%M%S")
+
     templates = await read_templates_details()
     user_templates = list(filter(lambda x: x['created_by'] == username, templates))
     headers = dict(request.headers)
@@ -91,6 +96,12 @@ async def read_templates(request: Request, username: str = Depends(authenticate_
 # Read one method by id
 @template_router.get("/{template_code}", response_model=Template, status_code = status.HTTP_200_OK)
 async def read_template_details(template_code: str, request: Request, username: str = Depends(authenticate_user)):
+
+    REQUEST_ID = str(uuid.uuid4())
+    now = datetime.now() # current date and time
+    date_time = now.strftime("%Y%m%d%H%M%S")
+    timestamp = now.strftime("%Y-%m-%d_%H%M%S")
+
     templates = await read_templates_details()
     template = list(filter(lambda x: x['code'] == template_code, templates))
     if template:
@@ -110,6 +121,12 @@ async def read_template_details(template_code: str, request: Request, username: 
 # Read content method by id
 @template_router.get("/{template_code}/content", response_model=Template_Content, status_code = status.HTTP_200_OK)
 async def read_template_content(template_code: str, request: Request, username: str = Depends(authenticate_user)):
+
+    REQUEST_ID = str(uuid.uuid4())
+    now = datetime.now() # current date and time
+    date_time = now.strftime("%Y%m%d%H%M%S")
+    timestamp = now.strftime("%Y-%m-%d_%H%M%S")
+
     templates = await read_templates_details()
     template = list(filter(lambda x: x['code'] == template_code, templates))
     if template:
@@ -133,6 +150,12 @@ async def read_template_content(template_code: str, request: Request, username: 
 # Delete one method
 @template_router.delete("/{template_code}", status_code = status.HTTP_202_ACCEPTED)
 async def delete_template(template_code: str, request: Request, username: str = Depends(authenticate_user)):
+
+    REQUEST_ID = str(uuid.uuid4())
+    now = datetime.now() # current date and time
+    date_time = now.strftime("%Y%m%d%H%M%S")
+    timestamp = now.strftime("%Y-%m-%d_%H%M%S")
+    
     templates = await read_templates_details()
     data = list(filter(lambda x: x['code'] == template_code, templates))
     if data:

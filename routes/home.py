@@ -3,12 +3,12 @@ from fastapi.responses import HTMLResponse
 from tools.logging import qlogging
 import uuid
 
-REQUEST_ID = str(uuid.uuid4())
-
 home_router = APIRouter()
 
 @home_router.get("/", response_class=HTMLResponse)
 async def health_check(request: Request):
+    
+    REQUEST_ID = str(uuid.uuid4())
     
     headers = dict(request.headers)
     message = "Health Checker has been called"

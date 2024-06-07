@@ -2,12 +2,12 @@
     "api_users": 
                 [
                     {
-                        "username": "admin",
-                        "password": "admin"
+                        "username": "admin1",
+                        "password": "password1"
                     },
                     {
-                        "username": "testuser",
-                        "password": "testpass"
+                        "username": "fcauser_dev",
+                        "password": "b4ccb8943d91db6012e93b3f20c11d"
                     }
                 ]
 }

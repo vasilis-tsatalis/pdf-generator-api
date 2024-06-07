@@ -24,19 +24,18 @@ TEMPLATES_PATH = f"{config('TEMPLATES_PATH')}"
 TEMPORARY_PATH = f"{config('TEMPORARY_DOCUMENTS_PATH')}"
 PDFDOCUMENT_PATH = f"{config('PDF_DOCUMENTS_PATH')}"
 
-REQUEST_ID = str(uuid.uuid4())
-
-# # # Find Date # # #
-now = datetime.now() # current date and time
-date_time = now.strftime("%Y%m%d%H%M%S")
-timestamp = now.strftime("%Y-%m-%d_%H%M%S")
-
 # Route base url
 document_router = APIRouter()
 
 # Create document from template
 @document_router.post("/template/{template_code}", status_code = status.HTTP_201_CREATED)
 async def create_document(template_code: str, document: DocumentCreate, request: Request, username: str = Depends(authenticate_user)):
+
+    REQUEST_ID = str(uuid.uuid4())
+    now = datetime.now() # current date and time
+    date_time = now.strftime("%Y%m%d%H%M%S")
+    timestamp = now.strftime("%Y-%m-%d_%H%M%S")
+
     templates = await read_templates_details()
     template = list(filter(lambda x: x['code'] == template_code, templates))
     if not template:
@@ -91,7 +90,7 @@ async def create_document(template_code: str, document: DocumentCreate, request:
 
             # Sort the list by line key to find 
             # last record counter number
-            _temp_list = sorted(_temp_list, key = lambda x: x['line'])
+            _temp_list = sorted(_temp_list, key = lambda x: int(x['line']))
             # find last record into the list
             last_record = _temp_list[-1]
             last_record_counter_number = int(last_record['line'])
@@ -125,10 +124,12 @@ async def create_document(template_code: str, document: DocumentCreate, request:
             os.remove(merge_fullname)
 
             headers = dict(request.headers)
-            headers['doc_code'] = file_code
+            headersr = dict()
+            headersr = {'Content-Disposition': 'attachment; filename="' + document_fullname + '"'}
+            headersr['doc_code'] = file_code
             message = "Document from template_code " + template_code + " has been created: " + file_name + " - from the user: " + username
             await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '201', message)           
-            return FileResponse(document_fullname, headers=headers, media_type="application/pdf")
+            return FileResponse(document_fullname, headers=headersr, media_type="application/pdf")
     # an error occured
     headers = dict(request.headers)
     message = "Unable to create pdf document"
@@ -144,13 +145,20 @@ async def create_document(template_code: str, document: DocumentCreate, request:
 @document_router.get("/{document_code}", status_code = status.HTTP_200_OK)
 async def read_document(document_code: str, request: Request, username: str = Depends(authenticate_user)):
     
+    REQUEST_ID = str(uuid.uuid4())
+    now = datetime.now() # current date and time
+    date_time = now.strftime("%Y%m%d%H%M%S")
+    timestamp = now.strftime("%Y-%m-%d_%H%M%S")
+    
     document_fullname = ROOT_PATH + PDFDOCUMENT_PATH + document_code + PDF_FORMAT 
     if os.path.exists(document_fullname):
         headers = dict(request.headers)
-        headers['doc_code'] = document_code
+        headersr = dict()
+        headersr = {'Content-Disposition': 'attachment; filename="' + document_fullname + '"'}
+        headersr['doc_code'] = document_code
         message = "Document with code " + document_code + " found for the user: " + username
-        await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '201', message)           
-        return FileResponse(document_fullname, headers=headers, media_type="application/pdf")
+        await qlogging('access', REQUEST_ID, str(request.url), str(request.client), str(headers), '200', message)           
+        return FileResponse(document_fullname, headers=headersr, media_type="application/pdf")
     else:
         headers = dict(request.headers)
         message = "Document code not found for the user: " + username
