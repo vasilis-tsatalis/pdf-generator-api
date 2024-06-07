@@ -134,3 +134,7 @@ dmypy.json
 test/*
 *.docx
 *.pem
+
+documents/*
+temp/*
+template/*
